@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> {/* Added user-scalable=no */}
-    <title>Retro Paddle Ball - Mobile Friendly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>Retro Paddle Ball - Mobile Friendly</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -142,47 +141,56 @@
         let ballInPlay = false;
         const keysPressed = {};
 
+        // Function to draw a paddle
         function drawPaddle(x, y, width, height) {
-            ctx.fillStyle = '#0f0';
+            ctx.fillStyle = '#0f0'; // Green paddles
             ctx.fillRect(x, y, width, height);
         }
 
+        // Function to draw the ball
         function drawBall(x, y, radius) {
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#0f0';
+            ctx.fillStyle = '#0f0'; // Green ball
             ctx.fill();
             ctx.closePath();
         }
 
+        // Function to draw the center net
         function drawNet() {
             ctx.beginPath();
-            ctx.setLineDash([5, 15]);
+            ctx.setLineDash([5, 15]); // Dashed line for the net
             ctx.moveTo(canvas.width / 2, 0);
             ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.strokeStyle = '#333';
+            ctx.strokeStyle = '#333'; // Dimmer green for net
             ctx.lineWidth = 2;
             ctx.stroke();
             ctx.closePath();
-            ctx.setLineDash([]);
+            ctx.setLineDash([]); // Reset line dash
         }
 
+        // Function to reset the ball's position and speed
         function resetBall() {
             ball.x = canvas.width / 2;
             ball.y = canvas.height / 2;
             ballInPlay = false;
-            let angle = (Math.random() * Math.PI / 2) - (Math.PI / 4);
-            const direction = (Math.random() < 0.5) ? 1 : -1;
+            // Randomize initial direction after reset
+            let angle = (Math.random() * Math.PI / 2) - (Math.PI / 4); // -45 to 45 degrees
+            const direction = (Math.random() < 0.5) ? 1 : -1; // To left or right
+            
             currentBallSpeedX = initialBallSpeedMagnitude * Math.cos(angle) * direction;
             currentBallSpeedY = initialBallSpeedMagnitude * Math.sin(angle);
+            // Ensure a minimum horizontal speed
             if (Math.abs(currentBallSpeedX) < initialBallSpeedMagnitude / 2) {
                 currentBallSpeedX = (initialBallSpeedMagnitude / 2) * direction;
             }
+
             ball.dx = currentBallSpeedX;
             ball.dy = currentBallSpeedY;
             messageArea.textContent = 'Press Enter or Tap Here to Serve';
         }
 
+        // Function to update paddle positions based on keyboard input
         function updateKeyboardPaddleMovement() {
             if (keysPressed['s'] || keysPressed['S']) paddle1.y -= keyboardPaddleSpeed;
             if (keysPressed['x'] || keysPressed['X']) paddle1.y += keyboardPaddleSpeed;
@@ -194,66 +202,78 @@
             paddle2.y = Math.max(0, Math.min(canvas.height - paddle2.height, paddle2.y));
         }
 
+        // Function to update the ball's position and handle collisions
         function updateBallPosition() {
             if (!ballInPlay) return;
             ball.x += ball.dx;
             ball.y += ball.dy;
 
+            // Ball collision with top and bottom walls
             if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
                 ball.dy *= -1;
                 if (ball.y + ball.radius > canvas.height) ball.y = canvas.height - ball.radius;
                 if (ball.y - ball.radius < 0) ball.y = ball.radius;
             }
 
-            // Collision detection logic (simplified for brevity, same as before)
-            // Left paddle
+            // Ball collision with left paddle
             if (ball.dx < 0 && ball.x - ball.radius < paddle1.x + paddle1.width && ball.x + ball.radius > paddle1.x && ball.y + ball.radius > paddle1.y && ball.y - ball.radius < paddle1.y + paddle1.height) {
-                ball.x = paddle1.x + paddle1.width + ball.radius;
+                ball.x = paddle1.x + paddle1.width + ball.radius; // Prevent sticking
                 ball.dx *= -1;
+                // Increase speed
                 if (Math.abs(ball.dx) < maxBallSpeed) ball.dx += Math.sign(ball.dx) * speedIncrement;
                 if (Math.abs(ball.dy) < maxBallSpeed && ball.dy !== 0) ball.dy += Math.sign(ball.dy) * speedIncrement / 2;
-                else if (ball.dy === 0 && Math.abs(ball.dx) < maxBallSpeed) ball.dy += speedIncrement / 2 * (Math.random() < 0.5 ? -1 : 1);
+                else if (ball.dy === 0 && Math.abs(ball.dx) < maxBallSpeed) ball.dy += speedIncrement / 2 * (Math.random() < 0.5 ? -1 : 1); // Add Y if moving straight
+                // Adjust angle based on hit location
                 let deltaY = ball.y - (paddle1.y + paddle1.height / 2);
                 ball.dy += deltaY * 0.1;
-                ball.dy = Math.max(-maxBallSpeed * 0.75, Math.min(maxBallSpeed * 0.75, ball.dy));
+                ball.dy = Math.max(-maxBallSpeed * 0.75, Math.min(maxBallSpeed * 0.75, ball.dy)); // Clamp Y speed
             }
-            // Right paddle
+            // Ball collision with right paddle
             if (ball.dx > 0 && ball.x + ball.radius > paddle2.x && ball.x - ball.radius < paddle2.x + paddle2.width && ball.y + ball.radius > paddle2.y && ball.y - ball.radius < paddle2.y + paddle2.height) {
-                ball.x = paddle2.x - ball.radius;
+                ball.x = paddle2.x - ball.radius; // Prevent sticking
                 ball.dx *= -1;
+                // Increase speed
                 if (Math.abs(ball.dx) < maxBallSpeed) ball.dx += Math.sign(ball.dx) * speedIncrement;
                 if (Math.abs(ball.dy) < maxBallSpeed && ball.dy !== 0) ball.dy += Math.sign(ball.dy) * speedIncrement / 2;
                 else if (ball.dy === 0 && Math.abs(ball.dx) < maxBallSpeed) ball.dy += speedIncrement / 2 * (Math.random() < 0.5 ? -1 : 1);
+                // Adjust angle based on hit location
                 let deltaY = ball.y - (paddle2.y + paddle2.height / 2);
                 ball.dy += deltaY * 0.1;
-                ball.dy = Math.max(-maxBallSpeed * 0.75, Math.min(maxBallSpeed * 0.75, ball.dy));
+                ball.dy = Math.max(-maxBallSpeed * 0.75, Math.min(maxBallSpeed * 0.75, ball.dy)); // Clamp Y speed
             }
 
-            if (ball.x + ball.radius < 0) {
+            // Ball out of bounds (scoring)
+            if (ball.x + ball.radius < 0) { // Player 2 scores
                 player2Score++;
                 player2ScoreDisplay.textContent = player2Score;
                 resetBall();
-            } else if (ball.x - ball.radius > canvas.width) {
+            } else if (ball.x - ball.radius > canvas.width) { // Player 1 scores
                 player1Score++;
                 player1ScoreDisplay.textContent = player1Score;
                 resetBall();
             }
         }
 
+        // Main game loop
         function gameLoop() {
+            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw elements
             drawNet();
             drawPaddle(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
             drawPaddle(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
             drawBall(ball.x, ball.y, ball.radius);
 
+            // Update game state if started
             if (gameStarted) {
                 updateKeyboardPaddleMovement(); // Still process keyboard for flexibility
                 updateBallPosition();
             }
+            // Request next frame
             requestAnimationFrame(gameLoop);
         }
         
+        // Action to start/serve the ball
         function startGameAction() {
             if (!gameStarted) {
                 gameStarted = true;
@@ -263,12 +283,14 @@
             } else if (!ballInPlay) {
                 ballInPlay = true;
                 messageArea.textContent = '';
+                // Ensure ball has a direction if it was reset
                 if (ball.dx === 0 && ball.dy === 0) {
                     resetBall();
                 }
             }
         }
 
+        // Event listener for keydown events
         function handleKeyDown(e) {
             keysPressed[e.key.toLowerCase()] = true;
             if (e.key === 'Enter') {
@@ -276,11 +298,13 @@
             }
         }
 
+        // Event listener for keyup events
         function handleKeyUp(e) {
             keysPressed[e.key.toLowerCase()] = false;
         }
 
         // --- Touch Controls ---
+        // Event listener for touch movement
         function handleTouchMove(e) {
             e.preventDefault(); // Prevent scrolling/zooming
             const rect = canvas.getBoundingClientRect();
@@ -289,6 +313,7 @@
                 const touchX = touch.clientX - rect.left;
                 const touchY = touch.clientY - rect.top;
 
+                // Determine which paddle to move based on touch location
                 if (touchX < canvas.width / 2) { // Left half for paddle 1
                     paddle1.y = touchY - paddle1.height / 2;
                 } else { // Right half for paddle 2
@@ -300,6 +325,7 @@
             paddle2.y = Math.max(0, Math.min(canvas.height - paddle2.height, paddle2.y));
         }
         
+        // Event listener for touch start
         function handleTouchStart(e) {
             e.preventDefault(); // Good practice for game controls
             // If touch is on message area, treat as start game action
@@ -310,21 +336,23 @@
             }
         }
 
-
+        // Event listener for reset score button
         resetScoreButton.addEventListener('click', () => {
             player1Score = 0;
             player2Score = 0;
             player1ScoreDisplay.textContent = player1Score;
             player2ScoreDisplay.textContent = player2Score;
-            gameStarted = false;
+            gameStarted = false; // Stop game logic
             messageArea.textContent = 'Press Enter or Tap Here to Start';
-            resetBall();
+            resetBall(); // Reset ball position but don't start it
         });
         
+        // Event listeners for starting the game via message area
         messageArea.addEventListener('click', startGameAction); // For mouse clicks on desktop
         messageArea.addEventListener('touchstart', startGameAction, {passive: false}); // For touch taps on mobile
 
         // --- Initialization ---
+        // Function to resize the canvas and game elements
         function resizeCanvas() {
             const container = document.getElementById('gameContainer');
             // Ensure container width is based on its actual rendered size
@@ -332,10 +360,11 @@
             const containerPadding = parseFloat(containerStyle.paddingLeft) + parseFloat(containerStyle.paddingRight);
             let availableWidth = container.clientWidth - containerPadding;
             
-            const aspectRatio = 4 / 3;
+            const aspectRatio = 4 / 3; // Desired aspect ratio
             canvas.width = availableWidth;
             canvas.height = availableWidth / aspectRatio;
 
+            // Adjust if height exceeds viewport limits
             const maxHeight = window.innerHeight * 0.70; // Max 70% of viewport height
              if (canvas.height > maxHeight) {
                 canvas.height = maxHeight;
@@ -347,8 +376,8 @@
                 canvas.height = availableWidth / aspectRatio;
             }
 
-
-            paddleHeight = canvas.height / 7.5;
+            // Update paddle properties based on new canvas size
+            paddleHeight = canvas.height / 7.5; // Responsive paddle height
             paddle1.height = paddleHeight;
             paddle2.height = paddleHeight;
             paddle1.x = 10; // Keep paddle X fixed
@@ -364,10 +393,11 @@
                 paddle1.y = Math.max(0, Math.min(canvas.height - paddle1.height, paddle1.y));
                 paddle2.y = Math.max(0, Math.min(canvas.height - paddle2.height, paddle2.y));
                 // Ball position adjustment can be tricky during resize, often simpler to reset or accept minor shifts
-                 if (ball.x > canvas.width || ball.y > canvas.height) resetBall();
+                 if (ball.x > canvas.width || ball.y > canvas.height || ball.x < 0 || ball.y < 0) resetBall();
             }
         }
 
+        // Add global event listeners
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
         
@@ -377,9 +407,10 @@
 
         window.addEventListener('resize', resizeCanvas);
         
-        resizeCanvas();
-        messageArea.textContent = 'Press Enter or Tap Here to Start';
-        gameLoop();
+        // Initial setup
+        resizeCanvas(); // Call resizeCanvas to set initial dimensions and positions
+        messageArea.textContent = 'Press Enter or Tap Here to Start'; // Initial message
+        gameLoop(); // Start the game loop
     </script>
 </body>
 </html>
